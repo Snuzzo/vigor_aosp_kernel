@@ -2,7 +2,7 @@ VERSION = 3
 PATCHLEVEL = 0
 SUBLEVEL = 43
 EXTRAVERSION =
-NAME = Funky Kernel
+NAME = FunkyCM9_2.0
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
