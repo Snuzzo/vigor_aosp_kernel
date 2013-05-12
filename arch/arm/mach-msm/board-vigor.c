@@ -134,6 +134,9 @@
 #include <mach/htc_util.h>
 #include <mach/board_htc.h>
 
+#include <linux/ion.h>
+#include <mach/ion.h>
+
 #ifdef CONFIG_PERFLOCK
 #include <mach/perflock.h>
 #endif
@@ -343,6 +346,10 @@ int __init vigor_init_panel(struct resource *res, size_t size);
 
 #ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
 int set_two_phase_freq(int cpufreq);
+#endif
+
+#ifdef CONFIG_ION_MSM
+static struct platform_device ion_dev;
 #endif
 
 #ifdef CONFIG_MMC_MSM_SDC2_SUPPORT
@@ -3133,6 +3140,7 @@ early_param("pmem_audio_size", pmem_audio_size_setup);
 #endif
 
 #ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_ION_MSM
 static struct android_pmem_platform_data android_pmem_sf_pdata = {
 	.name = "pmem",
 	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
@@ -3145,7 +3153,7 @@ static struct platform_device android_pmem_sf_device = {
 	.id = 1,
 	.dev = { .platform_data = &android_pmem_sf_pdata },
 };
-
+#endif
 static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.name = "pmem_adsp",
 	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
@@ -3184,6 +3192,39 @@ static struct platform_device android_pmem_audio_device = {
 	.id = 4,
 	.dev = { .platform_data = &android_pmem_audio_pdata },
 };
+
+#ifdef CONFIG_ION_MSM
+static struct ion_co_heap_pdata co_ion_pdata = {
+	.adjacent_mem_id = INVALID_HEAP_ID,
+	.align = PAGE_SIZE,
+};
+
+static struct ion_platform_data ion_pdata = {
+	.nr = 2,
+	.heaps = {
+		{
+			.id  = ION_SYSTEM_HEAP_ID,
+			.type  = ION_HEAP_TYPE_SYSTEM,
+			.name  = ION_VMALLOC_HEAP_NAME,
+		},
+		{
+			.id  = ION_SF_HEAP_ID,
+			.type  = ION_HEAP_TYPE_CARVEOUT,
+			.name  = ION_SF_HEAP_NAME,
+			.base	= MSM_PMEM_SF_BASE,
+			.size  = MSM_PMEM_SF_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *)&co_ion_pdata,
+		},
+	}
+};
+
+static struct platform_device ion_dev = {
+	.name = "ion-msm",
+	.id = 1,
+	.dev = { .platform_data = &ion_pdata },
+};
+#endif
 
 #define PMEM_BUS_WIDTH(_bw) \
 	{ \
@@ -7516,7 +7557,9 @@ static struct platform_device *vigor_devices[] __initdata = {
 	&msm_batt_device,
 #endif
 #ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_ION_MSM
 	&android_pmem_sf_device,
+#endif
 	&android_pmem_adsp_device,
 	&android_pmem_adsp2_device,
 	&android_pmem_audio_device,
@@ -7604,6 +7647,9 @@ static struct platform_device *vigor_devices[] __initdata = {
 	&msm_device_sdio_al,
 #endif
 	&msm8660_device_watchdog,
+#ifdef CONFIG_ION_MSM
+        &ion_dev,
+#endif
 };
 
 static struct memtype_reserve msm8x60_reserve_table[] __initdata = {
@@ -7651,7 +7697,9 @@ static void __init size_pmem_devices(void)
 	size_pmem_device(&android_pmem_adsp2_pdata, MSM_PMEM_ADSP2_BASE, MSM_PMEM_ADSP2_SIZE);
 	size_pmem_device(&android_pmem_smipool_pdata, MSM_PMEM_SMIPOOL_BASE, MSM_PMEM_SMIPOOL_SIZE);
 	size_pmem_device(&android_pmem_audio_pdata, MSM_PMEM_AUDIO_BASE, pmem_audio_size);
+#ifndef CONFIG_ION_MSM
 	size_pmem_device(&android_pmem_sf_pdata, MSM_PMEM_SF_BASE, pmem_sf_size);
+#endif
 #endif
 }
 
@@ -7674,7 +7722,9 @@ static void __init reserve_pmem_memory(void)
 	reserve_memory_for(&android_pmem_adsp_pdata);
 	reserve_memory_for(&android_pmem_smipool_pdata);
 	reserve_memory_for(&android_pmem_audio_pdata);
+#ifndef CONFIG_ION_MSM
 	reserve_memory_for(&android_pmem_sf_pdata);
+#endif
 #endif
 }
 
