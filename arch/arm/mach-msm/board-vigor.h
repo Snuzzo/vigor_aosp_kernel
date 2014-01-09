@@ -69,7 +69,7 @@
 
 // PMEM
 #define MSM_PMEM_AUDIO_SIZE 0x239000 /* 2.22MB */
-#define MSM_PMEM_ADSP_SIZE 0x2200000 /* 34MB */
+#define MSM_PMEM_ADSP_SIZE 0x2C00000 /* 44MB */
 
 // ION SMI
 #define MSM_ION_MM_SIZE 0x3400000 /* 52MB */
@@ -98,7 +98,7 @@
 /* 0x42A00000~0x48800000 is 94MB Reserved for something */
 /* 0x48800000~0x7CC00000 is 836MB for APP */
 /* 0x7CC00000~0x80000000 is 52MB for ADSP PMEM */
-#define SIZE_ADDR1	  0x2FE00000
+#define SIZE_ADDR1	  0x2EA00000
 /*** END Memory map ***/
 
 /* GPIO definition */
